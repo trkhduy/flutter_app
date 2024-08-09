@@ -6,12 +6,13 @@ import 'package:flutter/services.dart';
 
 abstract interface class DataSource {
   Future<List<Song>?> loadData();
+
 }
 
 class RemoteDataSource implements DataSource {
   @override
   Future<List<Song>?> loadData() async {
-    const url = 'https://thantrieu.com/resources/braniumapis/songs.json';
+    const url = 'http://192.168.1.19:8080/api/v1/song/findAll';
     final uri = Uri.parse(url);
 
     try {
@@ -27,7 +28,7 @@ class RemoteDataSource implements DataSource {
         // Log thông tin về dữ liệu nhận được
         print('Response body: $songWrapper');
 
-        var songList = songWrapper['songs'] as List;
+        var songList = songWrapper['data'] as List;
         List<Song> songs = songList.map((song) => Song.fromJson(song)).toList();
         return songs;
       } else {

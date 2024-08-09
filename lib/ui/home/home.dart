@@ -209,7 +209,7 @@ class _SongItemSection extends StatelessWidget {
         ),
       ),
       title: Text(song.title),
-      subtitle: Text(song.artist),
+      subtitle: Text(song.artist.name),
       trailing: IconButton(
         icon: const Icon(Icons.more_horiz),
         onPressed: () {

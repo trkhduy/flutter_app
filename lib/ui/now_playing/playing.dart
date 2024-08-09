@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:music_app/data/model/song.dart';
+import 'package:music_app/data/service/apiService.dart';
 import 'package:music_app/ui/now_playing/audio_player_manager.dart';
 
 class NowPlaying extends StatelessWidget {
@@ -35,6 +38,9 @@ class _NowPlayingPageState extends State<NowPlayingPage>
   late int _selectedItemIndex;
   late Song _song;
   late double _currentAnimationPosition;
+  late APIService service;
+  bool _isShuffle = false;
+  bool _isRepeat = false;
 
   @override
   void initState() {
@@ -48,6 +54,7 @@ class _NowPlayingPageState extends State<NowPlayingPage>
     _audioPlayerManager = AudioPlayerManager(songUrl: _song.source);
     _audioPlayerManager.init();
     _selectedItemIndex = widget.songs.indexOf(widget.playingSong);
+    service = APIService();
   }
 
   @override
@@ -55,6 +62,8 @@ class _NowPlayingPageState extends State<NowPlayingPage>
     final screenWidth = MediaQuery.of(context).size.width;
     const delta = 64;
     final radius = (screenWidth - delta);
+    _audioPlayerManager.player
+        .setLoopMode(_isRepeat ? LoopMode.one : LoopMode.off);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -71,8 +80,8 @@ class _NowPlayingPageState extends State<NowPlayingPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _song.album,
+              const Text(
+                '_song.album',
               ),
               const SizedBox(
                 height: 16,
@@ -129,7 +138,7 @@ class _NowPlayingPageState extends State<NowPlayingPage>
                             height: 8,
                           ),
                           Text(
-                            _song.artist,
+                            _song.artist.name,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium!
@@ -176,10 +185,10 @@ class _NowPlayingPageState extends State<NowPlayingPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const MediaButtonControl(
-              function: null,
+          MediaButtonControl(
+              function: _setShuffle,
               icon: Icons.shuffle,
-              color: Colors.deepPurple,
+              color: _getShuffleColor(),
               size: 24),
           MediaButtonControl(
               function: _setPrevSong,
@@ -192,10 +201,10 @@ class _NowPlayingPageState extends State<NowPlayingPage>
               icon: Icons.skip_next,
               color: Colors.deepPurple,
               size: 36),
-          const MediaButtonControl(
-              function: null,
+          MediaButtonControl(
+              function: _setRepeatSong,
               icon: Icons.repeat,
-              color: Colors.deepPurple,
+              color: _getRepeatColor(),
               size: 24),
         ],
       ),
@@ -284,7 +293,16 @@ class _NowPlayingPageState extends State<NowPlayingPage>
   }
 
   void _setNextSong() {
-    ++_selectedItemIndex;
+    if (_isShuffle) {
+      var random = Random();
+      _selectedItemIndex = random.nextInt(widget.songs.length);
+    } else {
+      ++_selectedItemIndex;
+    }
+
+    if (_selectedItemIndex >= widget.songs.length) {
+      _selectedItemIndex = _selectedItemIndex % widget.songs.length;
+    }
     final nextSong = widget.songs[_selectedItemIndex];
     _audioPlayerManager.updateSongUrl(nextSong.source);
     setState(() {
@@ -296,7 +314,16 @@ class _NowPlayingPageState extends State<NowPlayingPage>
   }
 
   void _setPrevSong() {
-    --_selectedItemIndex;
+    if (_isShuffle) {
+      var random = Random();
+      _selectedItemIndex = random.nextInt(widget.songs.length);
+    } else {
+      --_selectedItemIndex;
+    }
+
+    if (_selectedItemIndex < 0) {
+      _selectedItemIndex = (-1 * _selectedItemIndex) % widget.songs.length;
+    }
     final nextSong = widget.songs[_selectedItemIndex];
     _audioPlayerManager.updateSongUrl(nextSong.source);
     setState(() {
@@ -305,6 +332,26 @@ class _NowPlayingPageState extends State<NowPlayingPage>
       _imageAnimController.repeat();
       _song = nextSong;
     });
+  }
+
+  void _setShuffle() {
+    setState(() {
+      _isShuffle = !_isShuffle;
+    });
+  }
+
+  Color? _getShuffleColor() {
+    return _isShuffle ? Colors.deepPurple : Colors.grey;
+  }
+
+  void _setRepeatSong() {
+    setState(() {
+      _isRepeat = !_isRepeat;
+    });
+  }
+
+  Color? _getRepeatColor() {
+    return _isRepeat ? Colors.deepPurple : Colors.grey;
   }
 }
 
